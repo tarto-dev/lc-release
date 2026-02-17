@@ -142,4 +142,4 @@ Exemple :
 
 ## 📄 Licence
 
-À définir (MIT recommandé).
+WTFPL
