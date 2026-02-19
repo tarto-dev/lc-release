@@ -6,7 +6,7 @@
 #   triés selon les conventions Conventional Commits.
 #
 #   - Ignore les merges
-#   - Trie par catégorie logique (feat, fix, refactor, etc.)
+#   - Trie par catégorie logique (feat, fix, docs, style, refactor, perf, test, build, ci, chore, revert)
 #   - Ajoute des emojis par type
 #   - Format optimisé pour changelog / release notes
 #   - Date courte: dd/mm/YYYY - HH:MM
@@ -49,6 +49,7 @@
 #   - sort
 #   - sed
 #   - grep
+#   - tr
 #   (protégées via chemins absolus sur macOS + fallback command -v)
 #
 # Bonnes pratiques:
@@ -251,34 +252,48 @@ lc-release() {
       -v userbase="$user_base" \
       -v git="$GIT" \
       -v ticket_from_branch="${LC_RELEASE_TICKET_FROM_BRANCH:-0}" '
-    # ---- Conventional sorting ----
-    function cat(msg) {
-      if (msg ~ /^feat(\(.+\))?!?: /) return 1;
-      if (msg ~ /^fix(\(.+\))?!?: /) return 2;
-      if (msg ~ /^perf(\(.+\))?!?: /) return 3;
-      if (msg ~ /^refactor(\(.+\))?!?: /) return 4;
-      if (msg ~ /^docs(\(.+\))?!?: /) return 5;
-      if (msg ~ /^test(\(.+\))?!?: /) return 6;
-      if (msg ~ /^build(\(.+\))?!?: /) return 7;
-      if (msg ~ /^ci(\(.+\))?!?: /) return 8;
-      if (msg ~ /^style(\(.+\))?!?: /) return 9;
-      if (msg ~ /^chore(\(.+\))?!?: /) return 10;
-      if (msg ~ /^revert(\(.+\))?!?: /) return 11;
+    # ---- Normalisation (ignore ticket + emoji prefix) ----
+    function norm(msg,    m) {
+      m = msg;
+      # supprime un éventuel ticket prefix: [#12345] ou [ABC-123]
+      sub(/^\[[^]]+\][[:space:]]+/, "", m);
+      # supprime un éventuel prefix non-lettre (emoji, puce, etc.)
+      sub(/^[^A-Za-z]+[[:space:]]*/, "", m);
+      return m;
+    }
+
+    # ---- Conventional sorting (ordre demandé) ----
+    function cat(msg,    m) {
+      m = norm(msg);
+
+      if (m ~ /^feat(\(.+\))?!?: /) return 1;
+      if (m ~ /^fix(\(.+\))?!?: /) return 2;
+      if (m ~ /^docs(\(.+\))?!?: /) return 3;
+      if (m ~ /^style(\(.+\))?!?: /) return 4;
+      if (m ~ /^refactor(\(.+\))?!?: /) return 5;
+      if (m ~ /^perf(\(.+\))?!?: /) return 6;
+      if (m ~ /^test(\(.+\))?!?: /) return 7;
+      if (m ~ /^build(\(.+\))?!?: /) return 8;
+      if (m ~ /^ci(\(.+\))?!?: /) return 9;
+      if (m ~ /^chore(\(.+\))?!?: /) return 10;
+      if (m ~ /^revert(\(.+\))?!?: /) return 11;
       return 99;
     }
 
-    function emoji(msg) {
-      if (msg ~ /^feat(\(.+\))?!?: /) return "✨ feat";
-      if (msg ~ /^fix(\(.+\))?!?: /) return "🐛 fix";
-      if (msg ~ /^perf(\(.+\))?!?: /) return "⚡ perf";
-      if (msg ~ /^refactor(\(.+\))?!?: /) return "♻️ refactor";
-      if (msg ~ /^docs(\(.+\))?!?: /) return "📚 docs";
-      if (msg ~ /^test(\(.+\))?!?: /) return "🧪 test";
-      if (msg ~ /^build(\(.+\))?!?: /) return "🏗️ build";
-      if (msg ~ /^ci(\(.+\))?!?: /) return "🤖 ci";
-      if (msg ~ /^style(\(.+\))?!?: /) return "🎨 style";
-      if (msg ~ /^chore(\(.+\))?!?: /) return "🧹 chore";
-      if (msg ~ /^revert(\(.+\))?!?: /) return "⏪ revert";
+    function emoji(msg,    m) {
+      m = norm(msg);
+
+      if (m ~ /^feat(\(.+\))?!?: /) return "✨ feat";
+      if (m ~ /^fix(\(.+\))?!?: /) return "🐛 fix";
+      if (m ~ /^docs(\(.+\))?!?: /) return "📚 docs";
+      if (m ~ /^style(\(.+\))?!?: /) return "🎨 style";
+      if (m ~ /^refactor(\(.+\))?!?: /) return "♻️ refactor";
+      if (m ~ /^perf(\(.+\))?!?: /) return "⚡ perf";
+      if (m ~ /^test(\(.+\))?!?: /) return "🧪 test";
+      if (m ~ /^build(\(.+\))?!?: /) return "🏗️ build";
+      if (m ~ /^ci(\(.+\))?!?: /) return "🤖 ci";
+      if (m ~ /^chore(\(.+\))?!?: /) return "🧹 chore";
+      if (m ~ /^revert(\(.+\))?!?: /) return "⏪ revert";
       return "• other";
     }
 
@@ -386,8 +401,8 @@ lc-release() {
       ticket_prefix = format_ticket(t);
 
       # format message
-      if (msg ~ /^[a-z]+(\(.+\))?!?: /) {
-        sub(/^[a-z]+(\(.+\))?!?: /, ticket_prefix e " — ", msg);
+      if (norm(msg) ~ /^[a-z]+(\(.+\))?!?: /) {
+        sub(/^[^A-Za-z]*[a-z]+(\(.+\))?!?: /, ticket_prefix e " — ", msg);
       } else {
         msg = ticket_prefix msg;
       }
