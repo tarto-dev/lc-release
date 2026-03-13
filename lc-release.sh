@@ -153,12 +153,12 @@ lc-release() {
   GREP="$(command -v grep 2>/dev/null)"
   TR="$(command -v tr 2>/dev/null)"
 
-  [ -x "$GIT" ]  || { echo "lc-release: git introuvable";  return 127; }
-  [ -x "$AWK" ]  || { echo "lc-release: awk introuvable";  return 127; }
-  [ -x "$SORT" ] || { echo "lc-release: sort introuvable"; return 127; }
-  [ -x "$SED" ]  || { echo "lc-release: sed introuvable";  return 127; }
-  [ -x "$GREP" ] || { echo "lc-release: grep introuvable"; return 127; }
-  [ -x "$TR" ]   || { echo "lc-release: tr introuvable";   return 127; }
+  [ -n "$GIT" ]  || { echo "lc-release: git introuvable";  return 127; }
+  [ -n "$AWK" ]  || { echo "lc-release: awk introuvable";  return 127; }
+  [ -n "$SORT" ] || { echo "lc-release: sort introuvable"; return 127; }
+  [ -n "$SED" ]  || { echo "lc-release: sed introuvable";  return 127; }
+  [ -n "$GREP" ] || { echo "lc-release: grep introuvable"; return 127; }
+  [ -n "$TR" ]   || { echo "lc-release: tr introuvable";   return 127; }
 
   # Expose aux helpers
   _LC_GIT="$GIT"
